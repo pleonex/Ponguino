@@ -50,6 +50,18 @@ void Pantalla::pinta() {
         pintaPixel(x, y, pantalla[x][y]);
 }
 
+void Pantalla::pinta(Objeto obj) {
+  // Comprueba las dimensiones
+  if (obj.getPosX() < 0 || obj.getPosX() + obj.getSizeX() > ANCHO ||
+      obj.getPosY() < 0 || obj.getPosY() + obj.getSizeY() > ALTO)
+    return;  
+  
+  // Pinta el objeto
+  for (int x = obj.getPosX(); x < obj.getPosX() + obj.getSizeX(); x++)
+    for (int y = obj.getPosY(); y < obj.getPosY() + obj.getSizeY(); y++)
+      pixel(x, y, 0, 0, 1);
+}
+
 /* Pinta un pixel en la pantalla */
 void Pantalla::pintaPixel(int x, int y, int valor) {
   // Obtiene las tres componentes de color

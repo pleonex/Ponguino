@@ -7,6 +7,7 @@
 #define Pantalla_h
 
 #include "Arduino.h"
+#include "Objeto.h"
 
 class Pantalla
 {
@@ -14,12 +15,13 @@ class Pantalla
     Pantalla(int pinData, int pinLatch, int pinClock);
     void limpia();
     void pinta();
+    void pinta(Objeto objeto);
     void pixel(int x, int y, int r, int g, int b);
-  
-  private:
+    
     static const int ANCHO = 8;
     static const int ALTO  = 8;
   
+  private:  
     // Pines de los registro de desplazamiento
     int _pinData;
     int _pinLatch;
