@@ -35,9 +35,11 @@ Objeto bola(1, 1);
 
 // Actualizacion del juego
 long tiempoJuego = 0;
-long tiempoJuegoDelay = 100;
+long tiempoJuegoDelay = 16;  // ~ 60 fps
+int refrescoPala = 0;
+int refrescoPalaDelay = 10;  // Determina la velocidad de la pala
 int refrescoBola = 0;
-int refrescoBolaDelay = 4;
+int refrescoBolaDelay = 15;  // Determina la velocidad de la bola
 
 void setup() {
   // Posicion inicial de la pala
@@ -55,30 +57,34 @@ void setup() {
 }
 
 void loop() {
+  // Determina si se debe actualizar el juego (fps)
   if (millis() - tiempoJuego > tiempoJuegoDelay) {
+    tiempoJuego = millis();  // Reincia el contador
     pantalla.limpia();
 
-    controlNave();
-    tiempoJuego = millis(); 
-    
+    // Actualiza y repinta la pala
+    if (++refrescoPala >= refrescoPalaDelay) {
+      refrescoPala = 0;
+      controlPala();    
+    }   
     pantalla.pinta(pala);
       
-    refrescoBola++;
-    if (refrescoBola >= refrescoBolaDelay) {
+    // Actualiza la bola si procede
+    if (++refrescoBola >= refrescoBolaDelay) {
       refrescoBola = 0;
-      
       bola.mueve();
       bola.rebota(pantalla.ANCHO, pantalla.ALTO);
       bola.rebota(pala);
     }
-    
     pantalla.pinta(bola);
   }
   
+  // La pantalla se pinta siempre por la multiplexacion
   pantalla.pinta();
 }
 
-void controlNave() {
+/* Comprueba si los controles de la pala han sido pulsados */
+void controlPala() {
   if ( btnArriba.estaPulsado() ) {
     pala.setVeloY(1);
     pala.mueve();
