@@ -94,6 +94,7 @@ void loop() {
           enviaPunto();
           
         bola.rebota(pantalla.ANCHO, pantalla.ALTO);
+        bola.rebota(pala);
         
         // Comprueba si la bola ha pasado al otro campo
         if (bola.getPosX() == pantalla.ANCHO - 1)
