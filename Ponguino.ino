@@ -33,6 +33,10 @@ Boton btnAbajo(3, true);
 Objeto pala(1, 3);
 Objeto bola(1, 1);
 
+// Variables multijugador
+boolean CLIENTE = true;
+boolean bolaEnCampo = !CLIENTE;
+
 // Actualizacion del juego
 long tiempoJuego = 0;
 long tiempoJuegoDelay = 16;  // ~ 60 fps
@@ -54,6 +58,11 @@ void setup() {
   bola.setVeloY(1);
   
   Serial.begin(9600);
+  
+  if (CLIENTE)
+    esperaPing();
+  else
+    realizaPing();
 }
 
 void loop() {
@@ -68,15 +77,25 @@ void loop() {
       controlPala();    
     }   
     pantalla.pinta(pala);
-      
-    // Actualiza la bola si procede
-    if (++refrescoBola >= refrescoBolaDelay) {
-      refrescoBola = 0;
-      bola.mueve();
-      bola.rebota(pantalla.ANCHO, pantalla.ALTO);
-      bola.rebota(pala);
+    
+    if (bolaEnCampo) {
+      // Actualiza la bola si procede
+      if (++refrescoBola >= refrescoBolaDelay) {
+        refrescoBola = 0;
+        bola.mueve();
+        
+        // Comprueba si la bola ha pasado al otro campo
+        if (bola.getPosX() == pantalla.ANCHO - 1) {
+          enviaPosicion();
+        } else {
+          bola.rebota(pantalla.ANCHO, pantalla.ALTO);
+          bola.rebota(pala);
+        }
+      }
+      pantalla.pinta(bola);
+    } else {
+      recibePosicion(); 
     }
-    pantalla.pinta(bola);
   }
   
   // La pantalla se pinta siempre por la multiplexacion
@@ -96,4 +115,86 @@ void controlPala() {
     pala.mueve();
     pala.limita(pantalla.ANCHO, pantalla.ALTO);
   }
+}
+
+void recibePosicion() {
+  if (Serial.available() < 2)
+    return;
+  
+  bola.setPosX( 7 );
+  bola.setPosY( char2int(Serial.read()) );
+  bola.setVeloX( -1 );
+  bola.setVeloY( char2int(Serial.read()) - 1 );
+  bolaEnCampo = true;
+}
+
+void enviaPosicion() {
+  Serial.print(int2char( bola.getPosY() ));
+  Serial.print(int2char( bola.getVeloY() + 1 ));
+  bolaEnCampo = false; 
+}
+
+void realizaPing() {
+  boolean recibido = false;
+  
+  while (!recibido) {
+    // Envia ping
+    Serial.print("HOLA");
+    
+    // Espera dos segundos a una respuesta
+    delay(2000);
+    
+    // Si ha recibido datos los comprueba
+    if (Serial.available() >= 4) {
+      char msg[5] = "\0\0\0\0";
+      Serial.readBytes(msg, 4);
+      if (strcmp(msg, "PLAY") == 0)
+        recibido = true;
+    }
+    
+    // Limpia el buffer
+    while (Serial.available() > 0)
+      Serial.read();
+  }
+}
+
+void esperaPing() {
+  boolean recibido = false;
+  
+  while (!recibido) {
+    // Espera a recibir datos
+    while (Serial.available() < 4) ;
+   
+    // Lee y comprueba el buffer
+    char msg[5] = "\0\0\0\0";
+    Serial.readBytes(msg, 4);
+    if (strcmp(msg, "HOLA") == 0)
+      recibido = true;
+    
+    // Limpia el buffer
+    while (Serial.available() > 0)
+      Serial.read();
+  }
+  
+  Serial.print("PLAY");
+}
+
+byte char2int(char ch) {
+  if (ch >= '0' && ch <= '9')
+   return ch - '0';
+  if (ch >= 'A' && ch <= 'F')
+   return 0xA + (ch - 'A');
+  if (ch >= 'a' && ch <= 'f')
+   return 0xA + (ch - 'a');
+
+  return 0xFF; 
+}
+
+char int2char(int x) {
+  if (x >= 0 && x <= 9)
+    return x + '0';
+  if (x >= 10 && x <= 15)
+    return (x - 10) + 'A';
+  
+  return 'F';
 }
