@@ -33,8 +33,11 @@ Boton btnAbajo(3, true);
 Objeto pala(1, 3);
 Objeto bola(1, 1);
 
+// Pin indicador de victoria
+int pinLed = 10;
+
 // Variables multijugador
-boolean CLIENTE = true;
+boolean CLIENTE = false;
 boolean bolaEnCampo = !CLIENTE;
 
 // Actualizacion del juego
@@ -46,6 +49,8 @@ int refrescoBola = 0;
 int refrescoBolaDelay = 15;  // Determina la velocidad de la bola
 
 void setup() {
+  pinMode(pinLed, OUTPUT);
+  
   // Posicion inicial de la pala
   pala.setPosX(0);
   pala.setPosY(0);
@@ -53,9 +58,9 @@ void setup() {
   
   // Posicion inicial de la bola
   bola.setPosX(5);
-  bola.setPosY(6);
-  bola.setVeloX(1);
-  bola.setVeloY(1);
+  bola.setPosY(4);
+  bola.setVeloX(-1);
+  bola.setVeloY(-1);
   
   Serial.begin(9600);
   
@@ -84,13 +89,15 @@ void loop() {
         refrescoBola = 0;
         bola.mueve();
         
+        bola.rebota(pala);
+        if (bola.getPosX() == 0)
+          enviaPunto();
+          
+        bola.rebota(pantalla.ANCHO, pantalla.ALTO);
+        
         // Comprueba si la bola ha pasado al otro campo
-        if (bola.getPosX() == pantalla.ANCHO - 1) {
+        if (bola.getPosX() == pantalla.ANCHO - 1)
           enviaPosicion();
-        } else {
-          bola.rebota(pantalla.ANCHO, pantalla.ALTO);
-          bola.rebota(pala);
-        }
       }
       pantalla.pinta(bola);
     } else {
@@ -117,7 +124,19 @@ void controlPala() {
   }
 }
 
-void recibePosicion() {
+void enviaPunto() {
+  Serial.print('L'); 
+}
+
+void recibePosicion() {  
+  // Comprueba primero que no sea un punto
+  if (Serial.peek() == 'L') {
+    Serial.read();
+    digitalWrite(pinLed, HIGH);
+    delay(1000);
+    digitalWrite(pinLed, LOW);
+  }
+  
   if (Serial.available() < 2)
     return;
   
