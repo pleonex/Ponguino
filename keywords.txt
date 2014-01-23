@@ -1,0 +1,2 @@
+Boton	KEYWORD1
+estaPulsado	KEYWORD2

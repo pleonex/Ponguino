@@ -17,23 +17,17 @@
     You should have received a copy of the GNU General Public License
     along with Ponguino.  If not, see <http://www.gnu.org/licenses/>. 
 */
+#include "Boton.h"
 #define VERSION 0.1
 
 // Pines para controlar la matriz de LED
-int dataPin  = 8;
-int latchPin = 11;
-int clockPin = 12;
+int dataPin  = 7;
+int latchPin = 6;
+int clockPin = 5;
 
 // Variables para controlar la pala
-int arribaPin = 7;
-int arribaAntes = HIGH;
-long arribaDebounceTime = 0;
-long arribaDebounceDelay = 50;
-
-int abajoPin  = 6;
-int abajoAntes = LOW;
-long abajoDebounceTime = 0;
-long abajoDebounceDelay = 25;
+Boton btnArriba(4, true);
+Boton btnAbajo(3, true);
 
 // Constantes y variables de la pala
 const int PALA_SIZE = 3;
@@ -63,8 +57,6 @@ void setup() {
   pinMode(dataPin,  OUTPUT);
   pinMode(latchPin, OUTPUT);
   pinMode(clockPin, OUTPUT);
-  pinMode(arribaPin, INPUT);
-  pinMode(abajoPin,  INPUT);
   
   for (int x = 0; x < ANCHO; x++) {
     for (int y = 0; y < ALTO; y++) {
@@ -131,15 +123,11 @@ void loop() {
 }
 
 void controlNave() {
-  int lectura = digitalRead(arribaPin);
-  if (lectura != arribaAntes)
-    arribaDebounceTime = millis();
+  if ( btnArriba.estaPulsado() )
+    palaY = (palaY + PALA_SIZE >= ALTO) ? ALTO - PALA_SIZE : palaY + 1;
   
-  if ((millis() - arribaDebounceTime) > arribaDebounceDelay && lectura == LOW) {
-    palaY = (palaY + PALA_SIZE >= ALTO) ? 0 : palaY + 1;
-  }
-  
-  arribaAntes = lectura;
+  if ( btnAbajo.estaPulsado() )
+    palaY = (palaY <= 0) ? 0 : palaY - 1;
 }
 
 /* Refresca la imagen de la pantalla */
@@ -171,7 +159,7 @@ void pintaPixel(int x, int y, int valor) {
   
   // Los escribe en el registro de desplazamiento
   digitalWrite(latchPin, LOW);
-  shiftOut(dataPin, clockPin, MSBFIRST, r);
+  shiftOut(dataPin, clockPin, MSBFIRST, b);
   shiftOut(dataPin, clockPin, LSBFIRST, y);
   digitalWrite(latchPin, HIGH);
 }
